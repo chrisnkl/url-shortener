@@ -8,6 +8,7 @@ import com.chrisnkl.shortenurl.infrastructure.web.dto.create_url.CreateUrlRespon
 import com.chrisnkl.shortenurl.infrastructure.web.service.IdempotencyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @RequestMapping("v1/urls")
 @RestController
@@ -65,7 +67,7 @@ public class UrlController {
             @RequestHeader(value = "X-Forwarded-For", defaultValue = "Unknown") String ipAddress) {
 
         String originalUrl = redirectUrlUseCase.getOriginalUrl(alias, userAgent, ipAddress);
-
+        log.info("Retrieved original URL: {} User IP: {}", originalUrl, ipAddress);
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(originalUrl))
                 .header(HttpHeaders.CACHE_CONTROL, "no-cache")
