@@ -15,12 +15,11 @@ public class TwoTierCacheAdapter implements CachePort {
 
     private final Cache<String, String> localCaffeineCache;
     private final StringRedisTemplate redisTemplate;
-    private static final String REDIS_KEY = "url:";
 
     @Override
     public void put(String key, String value) {
         localCaffeineCache.put(key, value);
-        redisTemplate.opsForValue().set("url:" + key, value, Duration.ofDays(7));
+        redisTemplate.opsForValue().set(key, value, Duration.ofDays(7));
     }
 
     @Override
@@ -31,7 +30,7 @@ public class TwoTierCacheAdapter implements CachePort {
         if (localValue != null) return Optional.of(localValue);
 
         // Check Level 2 - Redis
-        String redisValue = redisTemplate.opsForValue().get(REDIS_KEY + key);
+        String redisValue = redisTemplate.opsForValue().get(key);
         if (redisValue != null) {
 
             // Backfill level 1
