@@ -1,0 +1,12 @@
+target/
+.git/
+.gitignore
+.maven/
+*.log
+.idea/
+*.iml
+node_modules/
+.DS_Store
+*.swp
+*.swo
+

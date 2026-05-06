@@ -1,8 +1,10 @@
 package com.chrisnkl.shortenurl.domain.ports.in;
 
+import com.chrisnkl.shortenurl.domain.model.Link;
+
 @FunctionalInterface
 public interface CreateUrlUseCase {
 
-    String createShortUrl(String originalUrl);
+    Link createShortUrl(String originalUrl, Long ttlInSeconds);
 
 }

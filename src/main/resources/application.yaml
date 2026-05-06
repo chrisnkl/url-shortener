@@ -1,3 +1,22 @@
 spring:
   application:
-    name: ShortenUrl
+    name: ${SPRING_APPLICATION_NAME:Shorten Url}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/shorten_url}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+server:
+  port: 8080
+  servlet:
+    context-path: '/api'
+
+
+
+

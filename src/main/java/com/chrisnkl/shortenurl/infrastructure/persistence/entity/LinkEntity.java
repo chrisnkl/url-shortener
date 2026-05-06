@@ -9,10 +9,8 @@ import lombok.*;
 
 import java.time.Instant;
 
-
 @AllArgsConstructor
 @NoArgsConstructor
-@RequiredArgsConstructor
 @Getter @Setter
 @Table(name = "links")
 @Entity
