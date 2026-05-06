@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.Optional;
+import java.util.UUID;
 
 @RequiredArgsConstructor
-@RequestMapping("/v1/urls")
+@RequestMapping("v1/urls")
 @RestController
 public class UrlController {
 
@@ -25,25 +26,36 @@ public class UrlController {
     private final RedirectUrlUseCase redirectUrlUseCase;
     private final IdempotencyService idempotencyService;
     private static final String BASE_SHORT_URL = "http://localhost:8080/api/v1/urls/";
+    private static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
 
     @PostMapping
     public ResponseEntity<CreateUrlResponse> createUrl(
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @RequestHeader(value = IDEMPOTENCY_HEADER, required = false) String idempotencyKey,
             @RequestBody @Valid CreateUrlRequest createUrlRequest) {
 
-        Optional<CreateUrlResponse> cachedResponse = idempotencyService.getCachedResponse(idempotencyKey);
-        if (cachedResponse.isPresent()) return ResponseEntity.status(HttpStatus.CREATED).body(cachedResponse.get());
-
+        if (idempotencyKey != null) {
+            Optional<CreateUrlResponse> cachedResponse = idempotencyService.getCachedResponse(idempotencyKey);
+            if (cachedResponse.isPresent()) return ResponseEntity.status(HttpStatus.CREATED).body(cachedResponse.get());
+        }
 
         // Create short URL with optional TTL
         Link link = createUrlUseCase.createShortUrl(createUrlRequest.originalUrl(), createUrlRequest.ttlInSeconds());
 
-        CreateUrlResponse response = buildResponse(link);
+        CreateUrlResponse response = new CreateUrlResponse(
+                link.alias(),
+                BASE_SHORT_URL + link.alias(),
+                link.originalUrl(),
+                link.expiresAt()
+        );
 
-        // Cache the response for idempotency
+        if (idempotencyKey == null) idempotencyKey = UUID.randomUUID().toString();
+
+
         idempotencyService.cacheResponse(idempotencyKey, response);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(IDEMPOTENCY_HEADER, idempotencyKey)
+                .body(response);
     }
 
     @GetMapping("/{alias}")
@@ -61,14 +73,6 @@ public class UrlController {
 
     }
 
-    private CreateUrlResponse buildResponse(Link link) {
-        return new CreateUrlResponse(
-            link.alias(),
-            BASE_SHORT_URL + link.alias(),
-            link.originalUrl(),
-            link.expiresAt()
-        );
-    }
 }
 
 

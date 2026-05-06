@@ -35,7 +35,7 @@ public class OutboxAdapter implements AnalyticsOutboxPort {
                     false
             });
         } catch (Exception e) {
-            log.error("Failed to record click event: {}, error:{}... Continuing with the redirect..", alias, e.getMessage());
+            log.error("Failed to record click event: {}, error: {}... Continuing with the redirect..", alias, e.getMessage());
         }
 
     }
