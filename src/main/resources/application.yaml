@@ -19,8 +19,32 @@ spring:
     redis:
       host: ${SPRING_REDIS_HOST:localhost}
       port: ${SPRING_REDIS_PORT:6379}
+
 server:
   port: 8080
   servlet:
     context-path: '/api'
 
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      redisCache:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        record-exceptions:
+          - org.springframework.data.redis.RedisConnectionFailureException
+          - java.net.ConnectException
+  ratelimiter:
+    instances:
+      createUrl:
+        limit-for-period: 20
+        limit-refresh-period: 5s
+        timeout-duration: 0s
+      redirectUrl:
+        limit-for-period: 100
+        limit-refresh-period: 60s
+        timeout-duration: 0s

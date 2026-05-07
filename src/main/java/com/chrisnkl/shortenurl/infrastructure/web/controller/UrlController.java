@@ -6,6 +6,7 @@ import com.chrisnkl.shortenurl.domain.ports.in.RedirectUrlUseCase;
 import com.chrisnkl.shortenurl.infrastructure.web.dto.create_url.CreateUrlRequest;
 import com.chrisnkl.shortenurl.infrastructure.web.dto.create_url.CreateUrlResponse;
 import com.chrisnkl.shortenurl.infrastructure.web.service.IdempotencyService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class UrlController {
     private static final String BASE_SHORT_URL = "http://localhost:8080/api/v1/urls/";
     private static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
 
+    @RateLimiter(name = "createUrl")
     @PostMapping
     public ResponseEntity<CreateUrlResponse> createUrl(
             @RequestHeader(value = IDEMPOTENCY_HEADER, required = false) String idempotencyKey,
@@ -60,6 +62,7 @@ public class UrlController {
                 .body(response);
     }
 
+    @RateLimiter(name = "redirectUrl")
     @GetMapping("/{alias}")
     public ResponseEntity<Void> redirect(
             @PathVariable String alias,

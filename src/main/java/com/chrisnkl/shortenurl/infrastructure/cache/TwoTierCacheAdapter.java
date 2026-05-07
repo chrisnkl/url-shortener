@@ -2,6 +2,7 @@ package com.chrisnkl.shortenurl.infrastructure.cache;
 
 import com.chrisnkl.shortenurl.domain.ports.out.CachePort;
 import com.github.benmanes.caffeine.cache.Cache;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -16,12 +17,14 @@ public class TwoTierCacheAdapter implements CachePort {
     private final Cache<String, String> localCaffeineCache;
     private final StringRedisTemplate redisTemplate;
 
+    @CircuitBreaker(name = "redisCache", fallbackMethod = "fallbackPut")
     @Override
     public void put(String key, String value) {
         localCaffeineCache.put(key, value);
         redisTemplate.opsForValue().set(key, value, Duration.ofDays(7));
     }
 
+    @CircuitBreaker(name = "redisCache", fallbackMethod = "fallbackGet")
     @Override
     public Optional<String> get(String key) {
 
@@ -42,4 +45,13 @@ public class TwoTierCacheAdapter implements CachePort {
         return Optional.empty();
 
     }
+
+    public void fallbackPut(String key, String value, Throwable t) {
+        localCaffeineCache.put(key, value);
+    }
+
+    public Optional<String> fallbackGet(String key, Throwable t) {
+        return Optional.ofNullable(localCaffeineCache.getIfPresent(key));
+    }
+
 }
