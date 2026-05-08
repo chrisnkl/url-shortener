@@ -18,6 +18,23 @@ Implements a sophisticated caching layer for optimal performance:
 - **Fallback Chain**: L1 → L2 → Database
 - **Cache Consistency**: Automatic synchronization between tiers
 
+### Resilience Patterns with Resilience4j
+Implements fault tolerance and traffic control using Resilience4j:
+
+#### Circuit Breaker for Cache Operations
+Protects against Redis failures with automatic failure detection and recovery:
+- **Failure Threshold**: Opens circuit when 50% of calls fail within sliding window
+- **Recovery Strategy**: Half-open state allows 3 test calls after 10-second wait
+- **Fallback Behavior**: Falls back to local Caffeine cache when Redis is unavailable
+- **Monitored Exceptions**: Redis connection failures and network exceptions
+
+#### Rate Limiting for API Endpoints
+Prevents abuse and ensures fair resource usage:
+- **Create URL Endpoint**: 20 requests per 5 seconds
+- **Redirect Endpoint**: 100 requests per 20 seconds
+- **Immediate Rejection**: No queuing, instant 429 response when limits exceeded
+- **Distributed Safety**: Works across multiple service instances
+
 ### Outbox Pattern for Reliable Event Publishing
 Ensures **exactly-once** event delivery without distributed transactions:
 - **Transactional Writes**: URL creation and event recording happen in the same database transaction
@@ -83,6 +100,7 @@ GET /api/v1/urls/{alias}
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Web** | Spring Boot 4.0.6, Jakarta Validation | HTTP handling & validation |
+| **Resilience** | Resilience4j | Circuit breaker & rate limiting |
 | **Caching** | Caffeine (L1), Redis (L2) | Multi-tier caching |
 | **Persistence** | PostgreSQL, Spring Data JPA | Durable storage |
 | **Messaging** | Apache Kafka, Outbox Pattern | Event streaming at scale |
@@ -102,5 +120,3 @@ docker-compose up -d  # Start PostgreSQL, Redis, Kafka
 ./mvnw clean package
 ./mvnw spring-boot:run
 ```
-
----

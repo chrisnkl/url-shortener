@@ -46,5 +46,5 @@ resilience4j:
         timeout-duration: 0s
       redirectUrl:
         limit-for-period: 100
-        limit-refresh-period: 60s
+        limit-refresh-period: 20s
         timeout-duration: 0s
