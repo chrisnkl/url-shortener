@@ -1,8 +1,12 @@
 package com.chrisnkl.shortenurl.infrastructure.generator;
 
 import com.chrisnkl.shortenurl.domain.ports.out.IdGeneratorPort;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class SnowflakeIdGenerator implements IdGeneratorPort {
 
@@ -10,7 +14,19 @@ public class SnowflakeIdGenerator implements IdGeneratorPort {
     private static final long EPOCH = 1714521600000L;
     private long lastTimestamp = -1L;
     private long sequence = 0L;
-    private final long workerId = 1L;
+
+    @Value("${generator.snowflake.worker.id}")
+    private long workerId;
+
+    @PostConstruct
+    private void init() {
+
+        if (workerId < 0) {
+
+            log.warn("Missing environment variable: {}, setting default value: {}", "generator.snowflake.worker.id", 1);
+            workerId = 1;
+        }
+    }
 
     @Override
     public synchronized String generateUniqueAlias() {
