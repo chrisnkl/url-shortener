@@ -1,5 +1,6 @@
 package com.chrisnkl.shortenurl.infrastructure.web.controller;
 
+import com.chrisnkl.shortenurl.domain.model.BackendResponse;
 import com.chrisnkl.shortenurl.domain.model.Link;
 import com.chrisnkl.shortenurl.domain.ports.in.CreateUrlUseCase;
 import com.chrisnkl.shortenurl.domain.ports.in.RedirectUrlUseCase;
@@ -10,6 +11,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,18 +30,22 @@ public class UrlController {
     private final CreateUrlUseCase createUrlUseCase;
     private final RedirectUrlUseCase redirectUrlUseCase;
     private final IdempotencyService idempotencyService;
-    private static final String BASE_SHORT_URL = "http://localhost:8080/api/v1/urls/";
+
+    @Value("${app.base-url}")
+    private String BASE_SHORT_URL;
+
+
     private static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
 
     @RateLimiter(name = "createUrl")
     @PostMapping
-    public ResponseEntity<CreateUrlResponse> createUrl(
+    public ResponseEntity<BackendResponse<CreateUrlResponse>> createUrl(
             @RequestHeader(value = IDEMPOTENCY_HEADER, required = false) String idempotencyKey,
             @RequestBody @Valid CreateUrlRequest createUrlRequest) {
 
         if (idempotencyKey != null) {
             Optional<CreateUrlResponse> cachedResponse = idempotencyService.getCachedResponse(idempotencyKey);
-            if (cachedResponse.isPresent()) return ResponseEntity.status(HttpStatus.CREATED).body(cachedResponse.get());
+            if (cachedResponse.isPresent()) return ResponseEntity.status(HttpStatus.CREATED).body(new BackendResponse<>(HttpStatus.CREATED.value(), "Short url has been created successfully.", cachedResponse.get()));
         }
 
         // Create short URL with optional TTL
@@ -59,7 +65,7 @@ public class UrlController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .header(IDEMPOTENCY_HEADER, idempotencyKey)
-                .body(response);
+                .body(new BackendResponse<>(HttpStatus.CREATED.value(), "Short url has been created successfully.", response));
     }
 
     @RateLimiter(name = "redirectUrl")
